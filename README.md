@@ -48,9 +48,9 @@ chat_sftp     /entrypoint second:second_ ...   Up      0.0.0.0:2222->22/tcp
 * Laravelのプロジェクトを作成  
 `# composer create-project --prefer-dist laravel/laravel chat_app`
 
-* ドキュメントルートを追加（second_server/apache/conf/apache.conf）  
+* ドキュメントルートを追加（chat_server/apache/conf/apache.conf）  
 => 既に記載してあります。
-```conf:second_server/apache/conf/apache.conf
+```conf:chat_server/apache/conf/apache.conf
 # laravelのプロジェクト
 <VirtualHost *:80>
     ServerName lvh.me
@@ -58,7 +58,7 @@ chat_sftp     /entrypoint second:second_ ...   Up      0.0.0.0:2222->22/tcp
     VirtualDocumentRoot /var/www/html/chat_app/public
 
     <FilesMatch \.php$>
-        SetHandler "proxy:fcgi://second_php:9000"
+        SetHandler "proxy:fcgi://chat_php:9000"
     </FilesMatch>
 
     <Directory /var/www/html>
