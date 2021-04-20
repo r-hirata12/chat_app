@@ -1,0 +1,83 @@
+version: '3.8'
+services:
+  # CentOS 8 & Apache 2.4
+  chat_server:
+    container_name: 'chat_server'
+    build: ./chat_server
+    ports:
+      - '80:80'
+    tty: true
+    depends_on:
+      - chat_php
+    restart: always
+    privileged: true
+    command: 
+      - /sbin/init
+    volumes:
+      - ./chat_src:/var/www/html
+      - ./chat_server/apache/logs:/var/log/httpd
+      - ./chat_server/apache/conf:/etc/httpd/conf.d
+  
+  # php(ComposerとNodeのコンテナでもある)
+  chat_php:
+    container_name: 'chat_php'
+    build: ./chat_php
+    ports:
+      - '9000'
+    depends_on:
+      - chat_mysql
+      - chat_redis
+      - chat_mail
+    restart: always
+    tty: true
+    volumes:
+      - ./chat_src:/var/www/html
+  
+  # MySQL
+  chat_mysql:
+    container_name: 'chat_mysql'
+    build: ./chat_mysql
+    ports:
+      - '13309:3306'
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: chat_db
+      MYSQL_USER: chat_user
+      MYSQL_PASSWORD: chat
+      TZ: 'Asia/Tokyo'
+    volumes:
+      - datastore:/var/lib/mysql
+      - ./chat_mysql/logs:/var/log/mysql
+
+  # sfpt-server
+  chat_sftp:
+    container_name: 'chat_sftp'
+    image: atmoz/sftp
+    ports:
+      - "2222:22"
+    depends_on:
+      - chat_php
+    command: chat:chat_pw:1001
+    volumes:
+      - ./chat_sftp/upload:/home/chat/upload
+  
+  # redis
+  chat_redis:
+    container_name: 'chat_redis'
+    image: "redis:latest"
+    ports: 
+      - "6379:6379"
+    volumes: 
+      - "./chat_redis:/data"
+  
+  # mail (hostへのmail送信設定がめんどくさいので、docker上だけでmail送信できるようにする)
+  chat_mail:
+    container_name: chat_mail
+    image: mailhog/mailhog
+    ports:
+        - "8025:8025"
+        - "1025:1025"
+
+volumes:
+  datastore:
